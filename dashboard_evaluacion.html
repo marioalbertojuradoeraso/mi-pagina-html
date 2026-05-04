@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard de Evaluación — Diseño del Algoritmo y Prototipado</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #181c27;
+    --surface2: #1e2336;
+    --border: #2a3050;
+    --accent: #5b8def;
+    --accent2: #a78bfa;
+    --gold: #f5c842;
+    --green: #34d399;
+    --red: #f87171;
+    --orange: #fb923c;
+    --text: #e8eaf0;
+    --muted: #7e8aaa;
+    --prof-color: #a78bfa;
+    --peer-color: #5b8def;
+    --final-color: #34d399;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ─── HEADER ─── */
+  header {
+    background: linear-gradient(135deg, #12162080 0%, #1a1f3080 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 32px 40px 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, #5b8def15 0%, transparent 70%);
+    pointer-events: none;
+  }
+  header h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.75rem;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  header p {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  /* ─── LAYOUT ─── */
+  .container { display: flex; min-height: calc(100vh - 120px); }
+
+  /* ─── SIDEBAR ─── */
+  .sidebar {
+    width: 200px;
+    flex-shrink: 0;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 12px;
+    overflow-y: auto;
+  }
+  .sidebar-title {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    padding: 0 8px;
+    margin-bottom: 10px;
+  }
+  .group-btn {
+    width: 100%;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 12px;
+    margin-bottom: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.18s ease;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+  }
+  .group-btn:hover { background: var(--surface2); color: var(--text); }
+  .group-btn.active { background: var(--surface2); color: var(--text); border-left: 3px solid var(--accent); padding-left: 9px; }
+  .group-badge {
+    width: 28px; height: 28px;
+    border-radius: 6px;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    flex-shrink: 0;
+    transition: background 0.18s;
+  }
+  .group-btn.active .group-badge { background: var(--accent); color: #fff; }
+  .score-pill {
+    margin-left: auto;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 20px;
+    background: var(--border);
+  }
+  .score-pill.high { background: #34d39920; color: var(--green); }
+  .score-pill.mid { background: #f5c84220; color: var(--gold); }
+  .score-pill.low { background: #f8717120; color: var(--red); }
+
+  /* ─── MAIN CONTENT ─── */
+  .main { flex: 1; padding: 28px 32px; overflow-y: auto; }
+
+  /* ─── GROUP HEADER ─── */
+  .group-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .group-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 2rem;
+    color: #fff;
+    letter-spacing: -0.03em;
+  }
+  .group-subtitle { font-size: 0.82rem; color: var(--muted); margin-top: 4px; }
+  .final-score-big {
+    text-align: center;
+    background: linear-gradient(135deg, var(--surface2), var(--surface));
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 30px;
+    min-width: 150px;
+  }
+  .final-score-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted); }
+  .final-score-value {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3rem;
+    line-height: 1;
+    margin: 6px 0 4px;
+  }
+  .final-score-desc { font-size: 0.75rem; color: var(--muted); }
+
+  /* ─── CARDS GRID ─── */
+  .cards-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+  }
+  .stat-card-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 8px; }
+  .stat-card-value { font-size: 1.5rem; font-weight: 600; }
+  .stat-card-sub { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+
+  /* ─── TWO COL LAYOUT ─── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+
+  /* ─── SECTION CARD ─── */
+  .section-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+  }
+  .section-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-title .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  /* ─── CRITERIA BARS ─── */
+  .crit-row { margin-bottom: 14px; }
+  .crit-label { font-size: 0.78rem; color: var(--text); margin-bottom: 6px; display: flex; justify-content: space-between; }
+  .crit-label span { color: var(--muted); font-size: 0.72rem; }
+  .crit-bars { display: flex; flex-direction: column; gap: 4px; }
+  .bar-wrap { display: flex; align-items: center; gap: 8px; }
+  .bar-type { font-size: 0.62rem; color: var(--muted); width: 32px; flex-shrink: 0; }
+  .bar-track { flex: 1; height: 6px; background: var(--border); border-radius: 20px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 20px; transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  .bar-val { font-size: 0.72rem; font-weight: 600; width: 28px; text-align: right; }
+
+  /* ─── FORMULA CARD ─── */
+  .formula-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    font-size: 0.8rem;
+    line-height: 1.8;
+    margin-top: 12px;
+    font-family: 'DM Mono', 'Courier New', monospace;
+  }
+  .formula-line { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .badge { padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: 600; }
+  .badge-prof { background: #a78bfa20; color: var(--prof-color); }
+  .badge-peer { background: #5b8def20; color: var(--peer-color); }
+  .badge-final { background: #34d39920; color: var(--green); }
+
+  /* ─── COMMENTS ─── */
+  .comment-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+  .comment-text {
+    font-size: 0.85rem;
+    line-height: 1.7;
+    color: #c4cbdf;
+    font-style: italic;
+    border-left: 3px solid var(--accent2);
+    padding-left: 16px;
+    margin-top: 10px;
+  }
+  .no-comment { font-size: 0.82rem; color: var(--muted); font-style: italic; }
+
+  /* ─── RADAR CHART ─── */
+  .radar-wrap { display: flex; justify-content: center; align-items: center; padding: 10px 0; }
+
+  /* ─── SCORE COLOR HELPERS ─── */
+  .c-green { color: var(--green); }
+  .c-gold { color: var(--gold); }
+  .c-orange { color: var(--orange); }
+  .c-red { color: var(--red); }
+  .c-blue { color: var(--accent); }
+
+  /* ─── OVERVIEW TABLE ─── */
+  .overview { padding: 28px 32px; }
+  .overview-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.5rem;
+    color: #fff;
+    margin-bottom: 20px;
+  }
+  .rank-table { width: 100%; border-collapse: collapse; }
+  .rank-table th {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .rank-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.83rem;
+  }
+  .rank-table tr:hover td { background: var(--surface2); }
+  .rank-num { font-size: 0.75rem; color: var(--muted); }
+  .rank-medal { font-size: 1.1rem; }
+  .progress-cell { min-width: 120px; }
+  .progress-bar { height: 4px; background: var(--border); border-radius: 20px; overflow: hidden; margin-top: 4px; }
+  .progress-fill { height: 100%; border-radius: 20px; }
+
+  /* tabs */
+  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab-btn {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    padding: 10px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: -1px;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  @media(max-width: 900px) {
+    .two-col { grid-template-columns: 1fr; }
+    .cards-row { grid-template-columns: 1fr 1fr; }
+    .sidebar { width: 160px; }
+  }
+  @media(max-width: 640px) {
+    .sidebar { display: none; }
+    .main { padding: 16px; }
+    .cards-row { grid-template-columns: 1fr; }
+  }
+
+  /* animate in */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .animate-in { animation: fadeUp 0.35s ease both; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Dashboard de Evaluación · Diseño del Algoritmo y Prototipado</h1>
+  <p>Curso de Posgrado · Técnicas de Análisis de Información &nbsp;|&nbsp; 10 grupos evaluados · 360 registros · Ponderación: 60% Profesor / 40% Pares</p>
+</header>
+
+<div class="container">
+  <!-- Sidebar -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-title">Grupos</div>
+    <button class="group-btn active" onclick="showGroup(0)" id="btn-0">
+      <span class="group-badge">G</span> Resumen
+    </button>
+    <!-- dynamically inserted -->
+    <div id="group-btns"></div>
+  </nav>
+
+  <!-- Main -->
+  <div class="main" id="main-content">
+    <!-- Panels injected by JS -->
+  </div>
+</div>
+
+<script>
+const CRIT_SHORT = [
+  'Dominio Algorítmico',
+  'Justificación de Diseño',
+  'Concertación y Referentes',
+  'Calidad del Prototipo'
+];
+const CRIT_WEIGHT_LABEL = ['(40%)','(25%)','(20%)','(15%)'];
+const CRIT_WEIGHTS = [0.40, 0.25, 0.20, 0.15];
+
+const DATA = [
+  {"grupo":1,"n_total":45,"n_peers":44,"prof_items":[4.0,2.0,3.0,4.0],"prof_global":3.3,"peer_items":[4.2,4.27,4.2,4.23],"peer_global":4.22,"final":3.67,"prof_comments":[]},
+  {"grupo":2,"n_total":46,"n_peers":45,"prof_items":[5.0,4.0,3.0,3.0],"prof_global":4.05,"peer_items":[3.76,3.89,4.0,3.96],"peer_global":3.87,"final":3.98,"prof_comments":["Deben hacer ajustes en el diseño."]},
+  {"grupo":3,"n_total":39,"n_peers":38,"prof_items":[4.0,3.0,3.0,4.0],"prof_global":3.55,"peer_items":[3.95,4.0,4.05,4.18],"peer_global":4.02,"final":3.74,"prof_comments":["No es claro el objetivo de la propuesta. Deben tener un público objetivo. Y otras recomendaciones dadas al final de la charla."]},
+  {"grupo":4,"n_total":42,"n_peers":41,"prof_items":[4.0,4.0,3.0,4.0],"prof_global":3.8,"peer_items":[4.24,4.41,4.17,4.37],"peer_global":4.29,"final":4.0,"prof_comments":[]},
+  {"grupo":5,"n_total":41,"n_peers":40,"prof_items":[3.0,3.0,1.0,4.0],"prof_global":2.75,"peer_items":[3.98,4.0,3.82,4.15],"peer_global":3.98,"final":3.24,"prof_comments":["Falta evidenciar revisión y soporte bibliográfica para soportar decisiones en el diseño. Falta una presentación del diseño; solo se enfocan en colores, pero no se dice sobre qué elementos del diseño se aplicarían."]},
+  {"grupo":6,"n_total":34,"n_peers":33,"prof_items":[3.0,5.0,5.0,5.0],"prof_global":4.2,"peer_items":[4.27,4.27,4.27,4.27],"peer_global":4.27,"final":4.23,"prof_comments":[]},
+  {"grupo":7,"n_total":30,"n_peers":29,"prof_items":[5.0,5.0,5.0,5.0],"prof_global":5.0,"peer_items":[4.55,4.45,4.34,4.38],"peer_global":4.46,"final":4.78,"prof_comments":["Mejore el dominio del algoritmo."]},
+  {"grupo":8,"n_total":31,"n_peers":30,"prof_items":[5.0,5.0,5.0,5.0],"prof_global":5.0,"peer_items":[4.3,4.43,4.23,4.37],"peer_global":4.33,"final":4.73,"prof_comments":[]},
+  {"grupo":9,"n_total":30,"n_peers":29,"prof_items":[1.0,3.0,3.0,2.0],"prof_global":2.05,"peer_items":[4.07,4.24,4.21,4.14],"peer_global":4.15,"final":2.89,"prof_comments":["Falta claridad en el alcance de la herramienta propuesta. No se evidencia dominio de la idea durante la presentación. Debieron evidenciar de dónde sacan las ideas de diseño (colores, referentes técnicos). No tiene algoritmo ni prototipado aún."]},
+  {"grupo":10,"n_total":22,"n_peers":21,"prof_items":[5.0,4.0,4.0,3.0],"prof_global":4.25,"peer_items":[4.05,4.05,3.95,4.1],"peer_global":4.04,"final":4.17,"prof_comments":["No se muestra el prototipo en la presentación."]}
+];
+
+function scoreColor(v) {
+  if (v >= 4.5) return 'var(--green)';
+  if (v >= 4.0) return 'var(--accent)';
+  if (v >= 3.5) return 'var(--gold)';
+  if (v >= 3.0) return 'var(--orange)';
+  return 'var(--red)';
+}
+function scorePillClass(v) {
+  if (v >= 4.0) return 'high';
+  if (v >= 3.5) return 'mid';
+  return 'low';
+}
+function scoreLabel(v) {
+  if (v >= 4.5) return 'Sobresaliente';
+  if (v >= 4.0) return 'Excelente';
+  if (v >= 3.5) return 'Bueno';
+  if (v >= 3.0) return 'Aceptable';
+  return 'Por Mejorar';
+}
+function fmt(v) { return v.toFixed(2); }
+
+// Build sidebar buttons
+const btnContainer = document.getElementById('group-btns');
+DATA.forEach((d, i) => {
+  const btn = document.createElement('button');
+  btn.className = 'group-btn';
+  btn.id = `btn-${i+1}`;
+  btn.onclick = () => showGroup(i+1);
+  btn.innerHTML = `
+    <span class="group-badge">${d.grupo}</span>
+    Grupo ${d.grupo}
+    <span class="score-pill ${scorePillClass(d.final)}">${fmt(d.final)}</span>
+  `;
+  btnContainer.appendChild(btn);
+});
+
+function drawRadar(canvasId, profItems, peerItems) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const cx = W/2, cy = H/2;
+  const R = Math.min(W, H) * 0.36;
+  const N = 4;
+  const labels = ['Dominio\nAlgoritmo', 'Justif.\nDiseño', 'Concertación\nReferentes', 'Calidad\nPrototipo'];
+  const angles = Array.from({length: N}, (_, i) => (i * 2 * Math.PI / N) - Math.PI/2);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid
+  for (let r = 1; r <= 5; r++) {
+    ctx.beginPath();
+    ctx.strokeStyle = r === 5 ? '#2a3050' : '#1e2336';
+    ctx.lineWidth = 1;
+    const rr = (r/5) * R;
+    angles.forEach((a, i) => {
+      const x = cx + rr * Math.cos(a);
+      const y = cy + rr * Math.sin(a);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.stroke();
+    // scale label
+    ctx.fillStyle = '#4a5580';
+    ctx.font = '9px DM Sans';
+    ctx.textAlign = 'center';
+    ctx.fillText(r, cx + 4, cy - rr + 3);
+  }
+
+  // Axes
+  angles.forEach(a => {
+    ctx.beginPath();
+    ctx.strokeStyle = '#2a3050';
+    ctx.lineWidth = 1;
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx + R * Math.cos(a), cy + R * Math.sin(a));
+    ctx.stroke();
+  });
+
+  // Polygon helper
+  function drawPoly(items, color, fillAlpha) {
+    ctx.beginPath();
+    items.forEach((v, i) => {
+      const rr = (v/5) * R;
+      const x = cx + rr * Math.cos(angles[i]);
+      const y = cy + rr * Math.sin(angles[i]);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = color.replace(')', `, ${fillAlpha})`).replace('rgb', 'rgba').replace('#', '');
+    // use fillStyle directly
+    ctx.save();
+    ctx.globalAlpha = fillAlpha;
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.restore();
+    // dots
+    items.forEach((v, i) => {
+      const rr = (v/5) * R;
+      ctx.beginPath();
+      ctx.arc(cx + rr * Math.cos(angles[i]), cy + rr * Math.sin(angles[i]), 4, 0, Math.PI*2);
+      ctx.fillStyle = color;
+      ctx.fill();
+    });
+  }
+
+  drawPoly(peerItems, '#5b8def', 0.12);
+  drawPoly(profItems, '#a78bfa', 0.15);
+
+  // Labels
+  ctx.font = '10px DM Sans';
+  angles.forEach((a, i) => {
+    const lx = cx + (R + 28) * Math.cos(a);
+    const ly = cy + (R + 28) * Math.sin(a);
+    ctx.fillStyle = '#7e8aaa';
+    ctx.textAlign = Math.abs(Math.cos(a)) < 0.1 ? 'center' : (Math.cos(a) > 0 ? 'left' : 'right');
+    const parts = labels[i].split('\n');
+    parts.forEach((p, pi) => ctx.fillText(p, lx, ly - (parts.length-1)*6 + pi*12));
+  });
+}
+
+function buildGroupPanel(d) {
+  const profColor = scoreColor(d.prof_global);
+  const peerColor = scoreColor(d.peer_global);
+  const finalColor = scoreColor(d.final);
+  const canvasId = `radar-${d.grupo}`;
+
+  const critRows = CRIT_SHORT.map((c, i) => {
+    const pw = d.prof_items[i];
+    const ew = d.peer_items[i];
+    return `
+      <div class="crit-row">
+        <div class="crit-label">${c} <span>${CRIT_WEIGHT_LABEL[i]}</span></div>
+        <div class="crit-bars">
+          <div class="bar-wrap">
+            <span class="bar-type" style="color:var(--prof-color)">Prof</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${pw/5*100}%;background:var(--prof-color)"></div></div>
+            <span class="bar-val" style="color:var(--prof-color)">${fmt(pw)}</span>
+          </div>
+          <div class="bar-wrap">
+            <span class="bar-type" style="color:var(--peer-color)">Pares</span>
+            <div class="bar-track"><div class="bar-fill" style="width:${ew/5*100}%;background:var(--peer-color)"></div></div>
+            <span class="bar-val" style="color:var(--peer-color)">${fmt(ew)}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const commentHTML = d.prof_comments.length > 0
+    ? d.prof_comments.map(c => `<p class="comment-text">«&nbsp;${c}&nbsp;»</p>`).join('')
+    : `<p class="no-comment">Sin observaciones registradas por el profesor para este grupo.</p>`;
+
+  return `
+    <div class="group-header animate-in">
+      <div>
+        <div class="group-title">Grupo ${d.grupo}</div>
+        <div class="group-subtitle">${d.n_total} evaluaciones totales · ${d.n_peers} evaluadores pares · 1 profesor</div>
+      </div>
+      <div class="final-score-big">
+        <div class="final-score-label">Nota Final</div>
+        <div class="final-score-value" style="color:${finalColor}">${fmt(d.final)}</div>
+        <div class="final-score-desc">${scoreLabel(d.final)} · escala /5.0</div>
+      </div>
+    </div>
+
+    <div class="cards-row animate-in" style="animation-delay:.05s">
+      <div class="stat-card">
+        <div class="stat-card-label">Nota Profesor (60%)</div>
+        <div class="stat-card-value" style="color:${profColor}">${fmt(d.prof_global)}</div>
+        <div class="stat-card-sub">Aporte a la nota final: ${fmt(d.prof_global*0.6)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Nota Pares (40%)</div>
+        <div class="stat-card-value" style="color:${peerColor}">${fmt(d.peer_global)}</div>
+        <div class="stat-card-sub">Aporte a la nota final: ${fmt(d.peer_global*0.4)}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-card-label">Evaluadores pares</div>
+        <div class="stat-card-value" style="color:var(--accent)">${d.n_peers}</div>
+        <div class="stat-card-sub">Total registros: ${d.n_total}</div>
+      </div>
+    </div>
+
+    <div class="two-col animate-in" style="animation-delay:.1s">
+      <div class="section-card">
+        <div class="section-title"><span class="dot" style="background:var(--accent2)"></span>Detalle por Criterio</div>
+        ${critRows}
+      </div>
+      <div class="section-card">
+        <div class="section-title"><span class="dot" style="background:var(--accent)"></span>Radar Comparativo</div>
+        <div class="radar-wrap">
+          <canvas id="${canvasId}" width="260" height="220"></canvas>
+        </div>
+        <div style="display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:0.72rem;">
+          <span style="color:var(--prof-color)">● Profesor</span>
+          <span style="color:var(--peer-color)">● Pares</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card animate-in" style="animation-delay:.15s;margin-bottom:24px">
+      <div class="section-title"><span class="dot" style="background:var(--green)"></span>Cálculo de la Nota Final</div>
+      <div class="formula-box">
+        <div class="formula-line">
+          <span class="badge badge-final">Nota Final</span>
+          <span>=</span>
+          <span>0.60 ×</span>
+          <span class="badge badge-prof">Nota Profesor ${fmt(d.prof_global)}</span>
+          <span>+</span>
+          <span>0.40 ×</span>
+          <span class="badge badge-peer">Nota Pares ${fmt(d.peer_global)}</span>
+        </div>
+        <div class="formula-line" style="margin-top:8px;color:var(--muted)">
+          = 0.60 × ${fmt(d.prof_global)} + 0.40 × ${fmt(d.peer_global)}
+          = ${fmt(d.prof_global*0.6)} + ${fmt(d.peer_global*0.4)}
+          = <strong style="color:${finalColor}">${fmt(d.final)}</strong>
+        </div>
+        <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);font-family:'DM Sans',sans-serif">
+          Nota del profesor: promedio ponderado de los 4 criterios (40%, 25%, 20%, 15%).
+          Nota pares: mismo cálculo sobre el promedio de ${d.n_peers} evaluadores.
+        </div>
+      </div>
+    </div>
+
+    <div class="comment-block animate-in" style="animation-delay:.2s">
+      <div class="section-title"><span class="dot" style="background:var(--gold)"></span>Observaciones del Profesor</div>
+      ${commentHTML}
+    </div>
+  `;
+}
+
+// ─── OVERVIEW PANEL ───
+function buildOverview() {
+  const sorted = [...DATA].sort((a,b) => b.final - a.final);
+  const medals = ['🥇','🥈','🥉'];
+
+  const rows = sorted.map((d, i) => {
+    const fc = scoreColor(d.final);
+    return `
+      <tr>
+        <td>${medals[i] || `<span class="rank-num">#${i+1}</span>`}</td>
+        <td><strong>Grupo ${d.grupo}</strong></td>
+        <td style="color:${fc}; font-weight:600">${fmt(d.final)}</td>
+        <td style="color:var(--prof-color)">${fmt(d.prof_global)}</td>
+        <td style="color:var(--peer-color)">${fmt(d.peer_global)}</td>
+        <td>${d.n_peers}</td>
+        <td class="progress-cell">
+          <span style="color:${fc};font-size:0.78rem">${scoreLabel(d.final)}</span>
+          <div class="progress-bar"><div class="progress-fill" style="width:${d.final/5*100}%;background:${fc}"></div></div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  // bar chart of finals
+  const barWidth = 100 / DATA.length;
+  const bars = DATA.map(d => {
+    const fc = scoreColor(d.final);
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1">
+        <span style="font-size:0.68rem;color:var(--muted);margin-bottom:4px">${fmt(d.final)}</span>
+        <div style="width:100%;max-width:40px;background:var(--border);border-radius:6px 6px 0 0;height:120px;display:flex;align-items:flex-end">
+          <div style="width:100%;background:${fc};border-radius:6px 6px 0 0;height:${d.final/5*100}%;transition:height .6s ease;min-height:4px"></div>
+        </div>
+        <span style="font-size:0.7rem;margin-top:6px;color:var(--muted)">G${d.grupo}</span>
+      </div>`;
+  }).join('');
+
+  const avg = DATA.reduce((s,d) => s+d.final, 0) / DATA.length;
+  const max = Math.max(...DATA.map(d => d.final));
+  const min = Math.min(...DATA.map(d => d.final));
+
+  return `
+    <div class="overview animate-in">
+      <div style="font-family:'DM Serif Display',serif;font-size:1.8rem;color:#fff;margin-bottom:6px">Resumen General</div>
+      <p style="font-size:0.82rem;color:var(--muted);margin-bottom:24px">Vista consolidada de los 10 grupos evaluados</p>
+
+      <div class="cards-row" style="margin-bottom:24px">
+        <div class="stat-card">
+          <div class="stat-card-label">Promedio de Curso</div>
+          <div class="stat-card-value" style="color:${scoreColor(avg)}">${fmt(avg)}</div>
+          <div class="stat-card-sub">Nota global promedio</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Nota más alta</div>
+          <div class="stat-card-value" style="color:var(--green)">${fmt(max)}</div>
+          <div class="stat-card-sub">Grupo ${DATA.find(d=>d.final===max).grupo}</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-label">Nota más baja</div>
+          <div class="stat-card-value" style="color:var(--red)">${fmt(min)}</div>
+          <div class="stat-card-sub">Grupo ${DATA.find(d=>d.final===min).grupo}</div>
+        </div>
+      </div>
+
+      <div class="section-card" style="margin-bottom:24px">
+        <div class="section-title"><span class="dot" style="background:var(--accent)"></span>Nota Final por Grupo</div>
+        <div style="display:flex;gap:6px;align-items:flex-end;padding:10px 0;border-bottom:1px solid var(--border)">
+          ${bars}
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:16px;margin-top:10px;font-size:0.72rem;color:var(--muted)">
+          Escala 1–5
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-title"><span class="dot" style="background:var(--gold)"></span>Ranking de Grupos</div>
+        <table class="rank-table">
+          <thead>
+            <tr>
+              <th>#</th><th>Grupo</th><th>Nota Final</th><th>Profesor</th><th>Pares</th><th>N° Evaluadores</th><th>Nivel</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+let currentGroup = 0;
+
+function showGroup(idx) {
+  // Update active button
+  document.querySelectorAll('.group-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`btn-${idx}`).classList.add('active');
+
+  const main = document.getElementById('main-content');
+  currentGroup = idx;
+
+  if (idx === 0) {
+    main.innerHTML = buildOverview();
+  } else {
+    const d = DATA[idx-1];
+    main.innerHTML = buildGroupPanel(d);
+    setTimeout(() => drawRadar(`radar-${d.grupo}`, d.prof_items, d.peer_items), 50);
+  }
+}
+
+// Initial render
+showGroup(0);
+</script>
+</body>
+</html>
